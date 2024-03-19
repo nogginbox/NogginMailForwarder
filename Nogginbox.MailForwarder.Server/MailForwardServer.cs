@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Nogginbox.MailForwarder.Server.Configuration;
 using Nogginbox.MailForwarder.Server.Dns;
 using Nogginbox.MailForwarder.Server.MailboxFilters;
+using Nogginbox.MailForwarder.Server.MailRules;
 using Nogginbox.MailForwarder.Server.MessageStores;
 using SmtpServer;
 using SmtpServer.Authentication;
@@ -16,7 +17,7 @@ namespace Nogginbox.MailForwarder.Server;
 
 public class MailForwardServer
 {
-	private readonly List<ForwardRule> _rules = new ();
+    private readonly List<IMessageRule> _rules = [];
 	private readonly DnsMxFinder _dnsFinder = new();
 	private SmtpServer.SmtpServer _server;
 
@@ -62,7 +63,7 @@ public class MailForwardServer
 			_rules.Add(rule);
 			log.LogInformation("Registered rule (pattern: {pattern}, forward: {forward}", rule.AliasPattern, rule.ForwardAddress);
 		}
-		log.LogInformation("{rulecount} rules completed registering.", _rules.Count);
+		log.LogInformation("{rule-count} rules completed registering.", _rules.Count);
 	}
 
 	private static void RegisterSmtpEvents(SmtpServer.SmtpServer server, Logging.ILogger log)

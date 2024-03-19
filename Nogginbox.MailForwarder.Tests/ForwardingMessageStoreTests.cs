@@ -1,7 +1,7 @@
 ﻿using MailKit.Net.Smtp;
 using MimeKit;
-using Nogginbox.MailForwarder.Server;
 using Nogginbox.MailForwarder.Server.Dns;
+using Nogginbox.MailForwarder.Server.MailRules;
 using Nogginbox.MailForwarder.Server.MessageStores;
 using NSubstitute;
 using SmtpServer;
@@ -22,15 +22,15 @@ public class ForwardingMessageStoreTests
 	{
 		// Arrange
 		const string targetEmail = "target@target-domain.com";
-		var rules = new List<ForwardRule>
+		var rules = new List<IMessageRule>
 		{
-			new ("someone.*@alias-domain.com", targetEmail)
+			new ForwardRule("someone.*@alias-domain.com", targetEmail)
 		};
 		var dnsFinder = CreateMockFinder();
 		var storedMailKitResponses = new List<MailKitClientResponse>();
 		var smtpClient = CreateMockSmtpClient(storedMailKitResponses);
-		var smtpClientFactory = () => smtpClient;
-		var log = Substitute.For<Logging.ILogger>();
+        ISmtpClient smtpClientFactory() => smtpClient;
+        var log = Substitute.For<Logging.ILogger>();
 		var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
 		var context = CreateMockSessionContext();
 		var transaction = CreateMockEmailTransaction(incomingRecipientAddress);
@@ -66,17 +66,17 @@ public class ForwardingMessageStoreTests
 		const string incomingRecipientAddress = "someone.testing@alias-domain.com";
 		const string targetEmail1 = "target1@target-domain.com";
 		const string targetEmail2 = "target2@target-domain.com";
-		var rules = new List<ForwardRule>
+		var rules = new List<IMessageRule>
 		{
-			new ("someone.*@alias-domain.com", targetEmail1),
-			new ("*@alias-domain.com", targetEmail2)
+			new ForwardRule("someone.*@alias-domain.com", targetEmail1),
+			new ForwardRule("*@alias-domain.com", targetEmail2)
 		};
 		var dnsFinder = CreateMockFinder();
 		var storedMailKitResponses = new List<MailKitClientResponse>();
 		var log = Substitute.For<Logging.ILogger>();
 		var smtpClient = CreateMockSmtpClient(storedMailKitResponses);
-		var smtpClientFactory = () => smtpClient;
-		var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
+        ISmtpClient smtpClientFactory() => smtpClient;
+        var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
 		var context = CreateMockSessionContext();
 		var transaction = CreateMockEmailTransaction(incomingRecipientAddress);
 		var buffer = CreateMessageInBuffer();
@@ -104,16 +104,16 @@ public class ForwardingMessageStoreTests
 	{
 		// Arrange
 		const string targetEmail = "target@target-domain.com";
-		var rules = new List<ForwardRule>
+		var rules = new List<IMessageRule>
 		{
-			new ("*@alias-domain.com", targetEmail)
+			new ForwardRule("*@alias-domain.com", targetEmail)
 		};
 		var dnsFinder = CreateMockFinder();
 		var storedMailKitResponses = new List<MailKitClientResponse>();
 		var log = Substitute.For<Logging.ILogger>();
 		var smtpClient = CreateMockSmtpClient(storedMailKitResponses);
-		var smtpClientFactory = () => smtpClient;
-		var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
+        ISmtpClient smtpClientFactory() => smtpClient;
+        var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
 		var context = CreateMockSessionContext();
 		var transaction = CreateMockEmailTransaction(
 			"alias1@alias-domain.com",
@@ -147,7 +147,7 @@ public class ForwardingMessageStoreTests
 	public async Task IgnoresEmailIfNoRuleMatches(string incomingRecipientAddress)
 	{
 		// Arrange
-		var rules = new List<ForwardRule>
+		var rules = new List<IMessageRule>
 		{
 			new ForwardRule("someone.*@alias-domain.com", "target@target-domain.com")
 		};
@@ -155,8 +155,8 @@ public class ForwardingMessageStoreTests
 		var storedMailKitResponses = new List<MailKitClientResponse>();
 		var log = Substitute.For<Logging.ILogger>();
 		var smtpClient = CreateMockSmtpClient(storedMailKitResponses);
-		var smtpClientFactory = () => smtpClient;
-		var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
+        ISmtpClient smtpClientFactory() => smtpClient;
+        var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
 		var context = CreateMockSessionContext();
 		var transaction = CreateMockEmailTransaction(incomingRecipientAddress);
 		var buffer = CreateMessageInBuffer();
@@ -188,8 +188,8 @@ public class ForwardingMessageStoreTests
 		var storedMailKitResponses = new List<MailKitClientResponse>();
 		var log = Substitute.For<Logging.ILogger>();
 		var smtpClient = CreateMockSmtpClient(storedMailKitResponses);
-		var smtpClientFactory = () => smtpClient;
-		var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
+        ISmtpClient smtpClientFactory() => smtpClient;
+        var store = new ForwardingMessageStore(rules, dnsFinder, smtpClientFactory, log);
 		var context = CreateMockSessionContext();
 		var transaction = CreateMockEmailTransaction(incomingRecipientAddress);
 		var buffer = CreateMessageInBuffer();

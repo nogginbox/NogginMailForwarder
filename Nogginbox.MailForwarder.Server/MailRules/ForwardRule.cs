@@ -1,9 +1,9 @@
 ﻿using MimeKit;
 using System.Text.RegularExpressions;
 
-namespace Nogginbox.MailForwarder.Server;
+namespace Nogginbox.MailForwarder.Server.MailRules;
 
-public record ForwardRule(string AliasPattern, MailboxAddress ForwardAddress)
+public record ForwardRule(string AliasPattern, MailboxAddress ForwardAddress) : IMessageRule
 {
     public ForwardRule(string aliasPattern, string forwardAddress)
         : this(aliasPattern, new MailboxAddress(forwardAddress, forwardAddress)) { }

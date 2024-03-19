@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Nogginbox.MailForwarder.Server.MailRules;
 using SmtpServer;
 using SmtpServer.Mail;
 using SmtpServer.Storage;
@@ -11,10 +12,10 @@ namespace Nogginbox.MailForwarder.Server.MailboxFilters;
 /// </summary>
 public class IsExpectedRecipientMailboxFilter : IMailboxFilter
 {
-	private readonly IReadOnlyList<ForwardRule> _rules;
+	private readonly IReadOnlyList<IMessageRule> _rules;
 	private readonly Logging.ILogger _log;
 
-	public IsExpectedRecipientMailboxFilter(IReadOnlyList<ForwardRule> rules, Logging.ILogger log)
+	public IsExpectedRecipientMailboxFilter(IReadOnlyList<IMessageRule> rules, Logging.ILogger log)
 	{
 		_rules = rules;
 		_log = log;

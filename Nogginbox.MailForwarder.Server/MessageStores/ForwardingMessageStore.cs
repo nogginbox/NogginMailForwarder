@@ -3,6 +3,7 @@ using MailKit.Security;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using Nogginbox.MailForwarder.Server.Dns;
+using Nogginbox.MailForwarder.Server.MailRules;
 using SmtpServer;
 using SmtpServer.Mail;
 using SmtpServer.Storage;
@@ -19,7 +20,7 @@ public class ForwardingMessageStore : MessageStore
 {
 	private readonly IDnsMxFinder _dnsFinder;
 	private readonly Logging.ILogger _log;
-	private readonly IReadOnlyList<ForwardRule> _rules;
+	private readonly IReadOnlyList<IMessageRule> _rules;
 	private readonly Func<ISmtpClient> _smtpClientFactory;
 
 	/// <summary>
@@ -27,7 +28,7 @@ public class ForwardingMessageStore : MessageStore
 	/// </summary>
 	private const int SmtpPort = 25;
 
-	public ForwardingMessageStore(IReadOnlyList<ForwardRule> rules, IDnsMxFinder dnsFinder, Func<ISmtpClient> smtpClientFactory, Logging.ILogger log)
+	public ForwardingMessageStore(IReadOnlyList<IMessageRule> rules, IDnsMxFinder dnsFinder, Func<ISmtpClient> smtpClientFactory, Logging.ILogger log)
 	{
 		_dnsFinder = dnsFinder;
 		_log = log;
@@ -49,7 +50,7 @@ public class ForwardingMessageStore : MessageStore
 
 		if (matchedRules?.Any() != true)
 		{
-			_log.LogWarning("No rules in rulset({rulesetcount}) matched {recipients},",
+			_log.LogWarning("No rules in ruleset({ruleset-count}) matched {recipients},",
 				_rules.Count,
 				string.Join(", ", transaction.To.Select(t => t.AsAddress())));
 			return SmtpServerResponse.MailboxNameNotAllowed;
