@@ -16,36 +16,32 @@ namespace Nogginbox.MailForwarder.Server.MessageStores;
 /// <summary>
 /// Forwards the email if the recipient matched an alias in one of the configured forward rules.
 /// </summary>
-public class ForwardingMessageStore : MessageStore
+public class ForwardingMessageStore(
+	IReadOnlyList<IMessageRule> rules,
+	IDnsMxFinder dnsFinder,
+	Func<ISmtpClient> smtpClientFactory,
+	Logging.ILogger log) : MessageStore
 {
-	private readonly IDnsMxFinder _dnsFinder;
-	private readonly Logging.ILogger _log;
-	private readonly IReadOnlyList<IMessageRule> _rules;
-	private readonly Func<ISmtpClient> _smtpClientFactory;
+	private readonly IDnsMxFinder _dnsFinder = dnsFinder;
+	private readonly Logging.ILogger _log = log;
+	private readonly IReadOnlyList<IMessageRule> _rules = rules;
+	private readonly Func<ISmtpClient> _smtpClientFactory = smtpClientFactory;
 
 	/// <summary>
 	/// The SMTP port used for server to server communication.
 	/// </summary>
 	private const int SmtpPort = 25;
 
-	public ForwardingMessageStore(IReadOnlyList<IMessageRule> rules, IDnsMxFinder dnsFinder, Func<ISmtpClient> smtpClientFactory, Logging.ILogger log)
-	{
-		_dnsFinder = dnsFinder;
-		_log = log;
-		_rules = rules;
-		_smtpClientFactory = smtpClientFactory;
-	}
-
-	public override async Task<SmtpServerResponse> SaveAsync(ISessionContext context, IMessageTransaction transaction, ReadOnlySequence<byte> buffer, CancellationToken cancellationToken)
+    public override async Task<SmtpServerResponse> SaveAsync(ISessionContext context, IMessageTransaction transaction, ReadOnlySequence<byte> buffer, CancellationToken cancellationToken)
 	{
 		_log.LogInformation("Begin send attempt");
 		var matchedRules = transaction.To
 			.Where(t => t != null)
 			.Select(t => (email: t, rule:_rules.FirstOrDefault(r => r.IsMatch(t.AsAddress()))))
-			.Where(t => t.rule != null && t.rule?.ForwardAddress != null)
+			.Where(t => t.rule != null)
 			.DistinctBy(t => t.email.AsAddress(), StringComparer.OrdinalIgnoreCase)
 			.DistinctBy(r => r.rule?.ForwardAddress.Address, StringComparer.OrdinalIgnoreCase)
-			.Select(t => (t.email, rule:t.rule!))
+			//.Select(t => (t.email, rule:t.rule!))
 			.ToList();
 
 		if (matchedRules?.Any() != true)
@@ -60,12 +56,12 @@ public class ForwardingMessageStore : MessageStore
 		{
 			var message = await GetMessageAsync(buffer, cancellationToken);
 			var sender = new MailboxAddress(transaction.From.User, transaction.From.AsAddress());
-			var hostGroups = matchedRules.GroupBy(m => m.rule.ForwardAddress.Domain);
+			var hostGroups = matchedRules.GroupBy(m => m.rule?.ForwardAddress.Domain);
 
 			var sendTasks = hostGroups.Select(async group =>
 			{
 				var domain = group.Key;
-				var forwardAddresses = group.Select(g => g.rule.ForwardAddress).ToList();
+				var forwardAddresses = group.Select(g => g.rule?.ForwardAddress).ToList();
 
 				return await ForwardEmailAsync(domain, sender, forwardAddresses, context, transaction, message, cancellationToken);
 			});
