@@ -179,7 +179,7 @@ public class ForwardingMessageStoreTests
 			var parts = x.Split('@');
 			return new ForwardRule($"{parts[0]}@alias-domain.com", x);
 		}).ToList();
-		var incomingRecipientAddress = rules.Select(r => r.AliasPattern).ToList();
+		var incomingRecipientAddress = rules.Select(r => r.EmailPattern).ToList();
 
 		rules.Add(new ForwardRule("never-match@alias-domain.com", "noone@bad-domain.com"));
 		

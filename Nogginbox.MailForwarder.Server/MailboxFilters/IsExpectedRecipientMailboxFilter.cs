@@ -10,18 +10,12 @@ namespace Nogginbox.MailForwarder.Server.MailboxFilters;
 /// <summary>
 /// Checks to see if the intended recipient of this email is in the configured forward rules.
 /// </summary>
-public class IsExpectedRecipientMailboxFilter : IMailboxFilter
+public class IsExpectedRecipientMailboxFilter(IReadOnlyList<IMessageRule> rules, Logging.ILogger log) : IMailboxFilter
 {
-	private readonly IReadOnlyList<IMessageRule> _rules;
-	private readonly Logging.ILogger _log;
+	private readonly IReadOnlyList<IMessageRule> _rules = rules;
+	private readonly Logging.ILogger _log = log;
 
-	public IsExpectedRecipientMailboxFilter(IReadOnlyList<IMessageRule> rules, Logging.ILogger log)
-	{
-		_rules = rules;
-		_log = log;
-	}
-
-	public Task<MailboxFilterResult> CanAcceptFromAsync(ISessionContext context, IMailbox @from, int size, CancellationToken cancellationToken)
+    public Task<MailboxFilterResult> CanAcceptFromAsync(ISessionContext context, IMailbox @from, int size, CancellationToken cancellationToken)
 	{
 		return Task.FromResult(MailboxFilterResult.Yes);
 	}

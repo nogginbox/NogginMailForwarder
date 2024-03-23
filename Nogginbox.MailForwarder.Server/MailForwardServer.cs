@@ -61,7 +61,7 @@ public class MailForwardServer
 		{
 			var rule = new ForwardRule(configRule.Alias, configRule.Address);
 			_rules.Add(rule);
-			log.LogInformation("Registered rule (pattern: {pattern}, forward: {forward}", rule.AliasPattern, rule.ForwardAddress);
+			log.LogInformation("Registered rule (pattern: {pattern}, forward: {forward}", rule.EmailPattern, rule.ForwardAddress);
 		}
 		log.LogInformation("{rule-count} rules completed registering.", _rules.Count);
 	}
