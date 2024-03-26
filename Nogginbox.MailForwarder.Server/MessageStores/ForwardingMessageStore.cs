@@ -24,7 +24,7 @@ public class ForwardingMessageStore(
 {
 	private readonly IDnsMxFinder _dnsFinder = dnsFinder;
 	private readonly Logging.ILogger _log = log;
-	private readonly IReadOnlyList<IMessageRule> _rules = rules;
+	private readonly IReadOnlyList<IMessageRule> _rules = [.. rules.OrderByRuleType()];
 	private readonly Func<ISmtpClient> _smtpClientFactory = smtpClientFactory;
 
 	/// <summary>

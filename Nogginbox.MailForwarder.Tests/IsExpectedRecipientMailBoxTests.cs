@@ -72,6 +72,33 @@ public class IsExpectedRecipientMailBoxTests
 
         var forwardRecipient = new MailboxAddress("Tester 1", $"tester1@null.{Tld}");
         var rules = new List<IMessageRule>
+        {
+            new ForwardRule($"*@null.{Tld}", forwardRecipient),
+            new BlockRule($"richard.*@null.{Tld}")
+        };
+        var filter = new IsExpectedRecipientMailboxFilter(rules, log);
+
+        var to = new Mailbox(email);
+        var from = new Mailbox($"do-not-reply@null.{Tld}");
+
+        // Act
+        var result = await filter.CanDeliverToAsync(sessionContext, to, from, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(MailboxFilterResult.NoPermanently, result);
+    }
+
+    [Theory]
+    [InlineData($"rich.spam@null.{Tld}")]
+    [InlineData($"rich.leaked@null.{Tld}")]
+    public async Task AddressesWithMatchingForwardRulesNotMatchingBlockWillDeliverTest(string email)
+    {
+        // Arrange
+        var sessionContext = Substitute.For<ISessionContext>();
+        var log = Substitute.For<Logging.ILogger>();
+
+        var forwardRecipient = new MailboxAddress("Tester 1", $"tester1@null.{Tld}");
+        var rules = new List<IMessageRule>
     {
         new ForwardRule($"*@null.{Tld}", forwardRecipient),
         new BlockRule($"richard.*@null.{Tld}")
@@ -85,6 +112,6 @@ public class IsExpectedRecipientMailBoxTests
         var result = await filter.CanDeliverToAsync(sessionContext, to, from, CancellationToken.None);
 
         // Assert
-        Assert.Equal(MailboxFilterResult.NoPermanently, result);
+        Assert.Equal(MailboxFilterResult.Yes, result);
     }
 }
